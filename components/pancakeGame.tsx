@@ -224,13 +224,13 @@ const PancakeGame: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      const width = Math.min(400, browserWidth.current - 40);
+      const width = Math.min(400, window.innerWidth * 0.9);
       const height = width * 0.75;
       setPanSize({ width, height });
       setJeonSize(Math.max(30, width * 0.15));
-      setBackgroundSize({ width: browserWidth.current, height: browserHeight.current });
+      setBackgroundSize({ width: window.innerWidth, height: window.innerHeight });
     };
-
+  
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -307,6 +307,7 @@ const PancakeGame: React.FC = () => {
         jeon.id === id ? { ...jeon, isFlipped: true } : jeon
       )
     );
+    if(gameOver) return;
     setMessage(`${JeonTypes[type].name}이 뒤집어졌습니다!`);
     updateScore(5);
   };
@@ -323,6 +324,7 @@ const PancakeGame: React.FC = () => {
         jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
       )
     );
+    if(gameOver) return;
     setMessage(`${JeonTypes[type].name}이 타버렸네요!!`);
     updateScore(-10);
     setTimeout(() => removeJeon(id), 2000);
@@ -342,12 +344,17 @@ const PancakeGame: React.FC = () => {
     <div className="absolute top-0 left-0 w-full h-full">
       <JumakBackground width={backgroundSize.width} height={backgroundSize.height} />
     </div>
-    <div className="relative z-10 flex flex-col items-center justify-center p-4 bg-yellow-100 bg-opacity-80 rounded-lg">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center text-brown-800">추석맞이 전 부치기 게임</h1>
-      <div className="text-xl sm:text-2xl mb-4 text-brown-600">
-         점수: {score}점
+    <div className="relative z-10 flex flex-col items-center justify-center p-2 sm:p-4 bg-yellow-100 bg-opacity-70 rounded-lg max-w-[95%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] mx-auto my-4">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-brown-800">추석맞이 전 부치기 게임</h1>
+      <div className="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-4 text-brown-600">
+        점수: {score}점
       </div>
-      <div className="relative mb-4">
+      <div className="relative mb-2 sm:mb-4" style={{
+        width: `${panSize.width}px`,
+        height: `${panSize.height}px`,
+        maxWidth: '100%',
+        maxHeight: '50vh'
+      }}>
         <Pan width={panSize.width} height={panSize.height} />
         {jeons.map((jeon) => (
           <Jeon
@@ -361,12 +368,12 @@ const PancakeGame: React.FC = () => {
           />
         ))}
       </div>
-      <p className="text-lg text-red-500 font-semibold h-6">{message}</p>
-      <div className="flex flex-wrap justify-center gap-2">
+      <p className="text-sm sm:text-base md:text-lg text-red-500 font-semibold h-4 sm:h-6 mb-2">{message}</p>
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
         {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
           <button
             key={type}
-            className="px-3 py-1 bg-brown-500 text-orange-700 rounded hover:bg-brown-600 transition text-md sm:text-sm font-bold"
+            className="px-2 py-1 sm:px-3 sm:py-1 bg-brown-500 text-white rounded hover:bg-brown-600 transition text-xs sm:text-sm md:text-base font-bold"
             onClick={() => addJeon(type)}
             disabled={gameOver}
           >
