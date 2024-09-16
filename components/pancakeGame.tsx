@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface JeonType {
   color: string;
@@ -30,6 +30,7 @@ interface JeonProps {
   isFlipped: boolean;
   isBurnt: boolean;
   onClick: () => void;
+  size: number;
 }
 
 const Jeon: React.FC<JeonProps> = ({
@@ -38,13 +39,14 @@ const Jeon: React.FC<JeonProps> = ({
   isFlipped,
   isBurnt,
   onClick,
+  size,
 }) => {
   const jeonStyle: React.CSSProperties = {
     position: "absolute",
     left: `${position.x}px`,
     top: `${position.y}px`,
-    width: "60px",
-    height: "60px",
+    width: `${size}px`,
+    height: `${size}px`,
     borderRadius: "50%",
     backgroundColor: JeonTypes[type].color,
     transform: isFlipped ? "scaleY(-1)" : "none",
@@ -53,7 +55,7 @@ const Jeon: React.FC<JeonProps> = ({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    fontSize: "10px",
+    fontSize: `${size / 6}px`,
     fontWeight: "bold",
     color: "black",
     transition: "transform 0.3s, filter 0.3s",
@@ -66,56 +68,64 @@ const Jeon: React.FC<JeonProps> = ({
     transform: isFlipped ? "scaleY(-1)" : "none",
   };
 
+  const eyeStyle: React.CSSProperties = {
+    position: "absolute",
+    width: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
+    height: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
+    borderRadius: "50%",
+    backgroundColor: "black",
+    top: "30%",
+  };
+
+  const mouthStyle: React.CSSProperties = {
+    position: "absolute",
+    left: "50%",
+    bottom: "25%",
+    width: `${size / 3}px`,
+    height: `${size / 6}px`,
+    transform: "translateX(-50%)",
+  };
+
+  if (isBurnt) {
+    Object.assign(mouthStyle, {
+      borderRadius: `${size / 6}px ${size / 6}px 0 0`,
+      border: `${size / 30}px solid black`,
+      borderBottom: "none",
+    });
+  } else if (isFlipped) {
+    Object.assign(mouthStyle, {
+      width: `${size / 5}px`,
+      height: `${size / 5}px`,
+      borderRadius: "50%",
+      border: `${size / 30}px solid black`,
+    });
+  } else {
+    Object.assign(mouthStyle, {
+      borderRadius: `0 0 ${size / 6}px ${size / 6}px`,
+      border: `${size / 30}px solid black`,
+    });
+  }
+
   return (
     <div style={jeonStyle} onClick={onClick}>
       <div style={faceStyle}>
-        {/* Left eye */}
-        <div
-          style={{
-            position: "absolute",
-            left: "25%",
-            top: "30%",
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: "black",
-          }}
-        />
-        {/* Right eye */}
-        <div
-          style={{
-            position: "absolute",
-            right: "25%",
-            top: "30%",
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: "black",
-          }}
-        />
-        {/* Mouth */}
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: "25%",
-            width: "20px",
-            height: "10px",
-            borderRadius: "0 0 10px 10px",
-            border: "2px solid black",
-            borderTop: "none",
-            transform: "translateX(-50%)",
-          }}
-        />
-        <div style={{ marginTop: "70%" }}>{JeonTypes[type].name}</div>
+        <div style={{...eyeStyle, left: "25%"}} />
+        <div style={{...eyeStyle, right: "25%"}} />
+        <div style={mouthStyle} />
       </div>
     </div>
   );
 };
 
-const Pan: React.FC = () => {
+interface PanProps {
+  width: number;
+  height: number;
+}
+
+const Pan: React.FC<PanProps> = ({ width, height }) => {
   return (
-    <svg width="400" height="300" viewBox="0 0 400 300">
+    <div className="relative mb-4" style={{ width: `${width}px`, height: `${height}px` }}>
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       <defs>
         <radialGradient
           id="panGradient"
@@ -136,42 +146,43 @@ const Pan: React.FC = () => {
 
       {/* Pan body */}
       <ellipse
-        cx="200"
-        cy="150"
-        rx="180"
-        ry="120"
+        cx={width / 2}
+        cy={height / 2}
+        rx={width * 0.45}
+        ry={height * 0.4}
         fill="url(#panGradient)"
         filter="url(#panShadow)"
       />
 
       {/* Pan rim */}
       <ellipse
-        cx="200"
-        cy="150"
-        rx="175"
-        ry="115"
+        cx={width / 2}
+        cy={height / 2}
+        rx={width * 0.44}
+        ry={height * 0.38}
         fill="none"
         stroke="#333333"
-        strokeWidth="5"
-      />
-
-      {/* Pan handle */}
-      <path
-        d="M375 150 Q400 150 400 130 L400 170 Q400 150 375 150"
-        fill="#333333"
+        strokeWidth={width * 0.01}
       />
 
       {/* Pan surface */}
-      <ellipse cx="200" cy="150" rx="160" ry="100" fill="#555555" />
+      <ellipse 
+        cx={width / 2} 
+        cy={height / 2} 
+        rx={width * 0.4} 
+        ry={height * 0.33} 
+        fill="#555555" 
+      />
 
       {/* Surface texture */}
       <g opacity="0.1">
-        <circle cx="140" cy="120" r="10" fill="#999999" />
-        <circle cx="180" cy="100" r="15" fill="#999999" />
-        <circle cx="220" cy="140" r="12" fill="#999999" />
-        <circle cx="260" cy="110" r="8" fill="#999999" />
+        <circle cx={width * 0.35} cy={height * 0.4} r={width * 0.025} fill="#999999" />
+        <circle cx={width * 0.45} cy={height * 0.33} r={width * 0.0375} fill="#999999" />
+        <circle cx={width * 0.55} cy={height * 0.47} r={width * 0.03} fill="#999999" />
+        <circle cx={width * 0.65} cy={height * 0.37} r={width * 0.02} fill="#999999" />
       </g>
     </svg>
+  </div>
   );
 };
 
@@ -186,49 +197,105 @@ interface Jeon {
 const PancakeGame: React.FC = () => {
   const [score, setScore] = useState<number>(0);
   const [jeons, setJeons] = useState<Jeon[]>([]);
+  const [panSize, setPanSize] = useState({ width: 400, height: 300 });
+  const [jeonSize, setJeonSize] = useState(60);
+  const alramRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = Math.min(400, window.innerWidth - 40);
+      const height = width * 0.75;
+      setPanSize({ width, height });
+      setJeonSize(Math.max(30, width * 0.15));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const distance = (p1: Position, p2: Position): number => {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  };
+
+  const isColliding = (newPosition: Position, existingJeons: Jeon[], minDistance: number): boolean => {
+    return existingJeons.some(jeon => distance(newPosition, jeon.position) < minDistance);
+  };
+
+  const generateRandomPosition = (panWidth: number, panHeight: number, jeonSize: number): Position => {
+    const effectivePanWidth = panWidth / 2;  // 실제 팬의 너비
+    const effectivePanHeight = panHeight / 2;  // 실제 팬의 높이
+
+    const t = Math.random() * 2 * Math.PI;
+    const maxX = effectivePanWidth - jeonSize;
+    const maxY = effectivePanHeight - jeonSize;
+    const x = (maxX / 2) * Math.cos(t) + panWidth / 2;
+    const y = (maxY / 2) * Math.sin(t) + panHeight / 2;
+
+
+    return {
+      x: Math.max(jeonSize / 2, Math.min(x, panWidth - jeonSize / 2)),
+      y: Math.max(jeonSize / 2, Math.min(y, panHeight - jeonSize / 2))
+    };
+  };
 
   const addJeon = (type: keyof JeonTypes) => {
     if (jeons.length >= 5) return;
 
-    // Calculate position within the ellipse
-    const a = 140; // horizontal radius
-    const b = 80; // vertical radius
-    const t = Math.random() * 2 * Math.PI;
-    const x = 200 + a * Math.cos(t);
-    const y = 150 + b * Math.sin(t);
+    const minDistance = jeonSize + 10;
+    const maxAttempts = 50;
+
+    let newPosition: Position;
+    let attempts = 0;
+
+    do {
+      newPosition = generateRandomPosition(panSize.width, panSize.height, jeonSize);
+      attempts++;
+    } while (isColliding(newPosition, jeons, minDistance) && attempts < maxAttempts);
 
     const newJeon: Jeon = {
       id: Date.now(),
       type,
-      position: { x, y },
+      position: newPosition,
       isFlipped: false,
       isBurnt: false,
     };
 
     setJeons((prevJeons) => [...prevJeons, newJeon]);
-    setTimeout(() => burnJeon(newJeon.id), JeonTypes[type].cookTime);
+    setTimeout(() => burnJeon(newJeon.id, newJeon.type), JeonTypes[type].cookTime);
   };
 
-  const flipJeon = (id: number) => {
+  const flipJeon = (id: number, type:any) => {
     setJeons((prevJeons) =>
       prevJeons.map((jeon) =>
         jeon.id === id ? { ...jeon, isFlipped: true } : jeon
       )
     );
+    if (alramRef.current) {
+      alramRef.current.textContent = `${JeonTypes[type].name}이 뒤집어졌습니다!`;
+    }
     setScore((prevScore) => prevScore + 5);
+
   };
 
   const removeJeon = (id: number) => {
     setJeons((prevJeons) => prevJeons.filter((jeon) => jeon.id !== id));
     setScore((prevScore) => prevScore + 10);
+    if (alramRef.current) {
+      alramRef.current.textContent = "";
+    }
   };
 
-  const burnJeon = (id: number) => {
+  const burnJeon = (id: number, type:any) => {
     setJeons((prevJeons) =>
       prevJeons.map((jeon) =>
         jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
       )
     );
+    if (alramRef.current) {
+      alramRef.current.textContent = `${JeonTypes[type].name}이 타버렸네요!!`;
+    }
+    setScore((prevScore) => prevScore - 10);
     setTimeout(() => removeJeon(id), 2000);
   };
 
@@ -237,16 +304,20 @@ const PancakeGame: React.FC = () => {
     if (jeon.isFlipped) {
       removeJeon(jeon.id);
     } else {
-      flipJeon(jeon.id);
+      flipJeon(jeon.id, jeon.type);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-yellow-100">
-      <h1 className="text-4xl font-bold mb-4">전 부치기 게임</h1>
-      <div className="text-2xl mb-4">점수: {score}</div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-yellow-100 p-4">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">전 부치기 게임</h1>
+      {score >= 50 ?(
+        <div className="text-xl sm:text-2xl mb-4">점수가 {score}점 !! 수고하셨습니다</div>
+      ) : (
+        <div className="text-xl sm:text-2xl mb-4">점수: {score}</div>
+      )}
       <div className="relative mb-4">
-        <Pan />
+        <Pan width={panSize.width} height={panSize.height} />
         {jeons.map((jeon) => (
           <Jeon
             key={jeon.id}
@@ -255,14 +326,16 @@ const PancakeGame: React.FC = () => {
             isFlipped={jeon.isFlipped}
             isBurnt={jeon.isBurnt}
             onClick={() => handleJeonClick(jeon)}
+            size={jeonSize}
           />
         ))}
       </div>
-      <div className="flex space-x-2">
+      <p className="text-lg text-red-500 font-semibold" ref={alramRef}>&nbsp;</p>
+      <div className="flex flex-wrap justify-center gap-2">
         {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
           <button
             key={type}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm sm:text-base"
             onClick={() => addJeon(type)}
           >
             {JeonTypes[type].name} 추가
