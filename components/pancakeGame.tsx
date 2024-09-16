@@ -265,7 +265,7 @@ const PancakeGame: React.FC = () => {
     setTimeout(() => burnJeon(newJeon.id, newJeon.type), JeonTypes[type].cookTime);
   };
 
-  const flipJeon = (id: number, type:any) => {
+  const flipJeon = (id: number, type:keyof JeonTypes) => {
     setJeons((prevJeons) =>
       prevJeons.map((jeon) =>
         jeon.id === id ? { ...jeon, isFlipped: true } : jeon
@@ -286,7 +286,7 @@ const PancakeGame: React.FC = () => {
     }
   };
 
-  const burnJeon = (id: number, type:any) => {
+  const burnJeon = (id: number, type: keyof JeonTypes) => {
     setJeons((prevJeons) =>
       prevJeons.map((jeon) =>
         jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
