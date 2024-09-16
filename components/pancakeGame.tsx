@@ -310,7 +310,6 @@ const PancakeGame: React.FC = () => {
     );
     if(gameOver) return;
     setMessage(`${JeonTypes[type].name}이 뒤집어졌습니다!`);
-    updateScore(5);
   };
 
   const removeJeon = (id: number) => {
@@ -325,10 +324,10 @@ const PancakeGame: React.FC = () => {
         jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
       )
     );
-    if(gameOver) return;
+    if(gameOver || score >= 150) return;
     setMessage(`${JeonTypes[type].name}이 타버렸네요!!`);
     updateScore(-10);
-    setTimeout(() => removeJeon(id), 2000);
+    setTimeout(() => removeJeon(id), 3000);
   };
 
   const handleJeonClick = (jeon: Jeon) => {
