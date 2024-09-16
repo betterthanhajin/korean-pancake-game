@@ -238,8 +238,8 @@ const PancakeGame: React.FC = () => {
 
   useEffect(() => {
     if(score >= 100) {
+      setMessage("축하합니다! 100점을 달성하셨습니다!");
       setGameOver(true);
-      setMessage("축하합니다! 100점을 달성하셨습니다! Game Over!");
     }
   }, [score]);
 
@@ -366,7 +366,7 @@ const PancakeGame: React.FC = () => {
         {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
           <button
             key={type}
-            className="px-3 py-1 bg-brown-500 text-orange-700 rounded hover:bg-brown-600 transition text-sm sm:text-base"
+            className="px-3 py-1 bg-brown-500 text-orange-700 rounded hover:bg-brown-600 transition text-md sm:text-sm font-bold"
             onClick={() => addJeon(type)}
             disabled={gameOver}
           >
