@@ -17,12 +17,11 @@ interface JeonType {
 interface JeonTypes {
   [key: string]: JeonType;
 }
-
 const JeonTypes: JeonTypes = {
-  kimchi: { color: "#ffa502", cookTime: 5000, name: "김치전", image: kimchi },
-  pa: { color: "#7bed9f", cookTime: 4000, name: "파전", image: pa },
-  gogi: { color: "#ff6b6b", cookTime: 4500, name: "고기전", image: meat },
-  hobak: { color: "#eccc68", cookTime: 6000, name: "모듬전", image: group },
+  kimchi: { color: "#ffa502", cookTime: 8000, name: "김치전", image: kimchi },
+  pa: { color: "#7bed9f", cookTime: 7000, name: "파전", image: pa },
+  gogi: { color: "#ff6b6b", cookTime: 6000, name: "고기전", image: meat },
+  hobak: { color: "#eccc68", cookTime: 9000, name: "모듬전", image: group },
 };
 
 interface Position {
@@ -37,6 +36,7 @@ interface JeonProps {
   isBurnt: boolean;
   onClick: () => void;
   size: number;
+  remainingTime: number;
 }
 
 const Jeon: React.FC<JeonProps> = ({
@@ -46,6 +46,7 @@ const Jeon: React.FC<JeonProps> = ({
   isBurnt,
   onClick,
   size,
+  remainingTime,
 }) => {
   const jeonStyle: React.CSSProperties = {
     position: "absolute",
@@ -55,7 +56,7 @@ const Jeon: React.FC<JeonProps> = ({
     height: `${size}px`,
     borderRadius: "50%",
     transform: isFlipped ? "scaleY(-1)" : "none",
-    filter: isBurnt ? "brightness(50%)" : "none",
+    filter: isBurnt ? "brightness(50%) sepia(100%) saturate(300%) hue-rotate(320deg)" : "none",
     cursor: "pointer",
     display: "flex",
     justifyContent: "center",
@@ -63,62 +64,23 @@ const Jeon: React.FC<JeonProps> = ({
     transition: "transform 0.3s, filter 0.3s",
   };
 
-  // const faceStyle: React.CSSProperties = {
-  //   position: "relative",
-  //   width: "100%",
-  //   height: "100%",
-  //   transform: isFlipped ? "scaleY(-1)" : "none",
-  // };
-
-  // const eyeStyle: React.CSSProperties = {
-  //   position: "absolute",
-  //   width: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
-  //   height: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
-  //   borderRadius: "50%",
-  //   backgroundColor: "black",
-  //   top: "30%",
-  // };
-
-  const mouthStyle: React.CSSProperties = {
+  const timerStyle: React.CSSProperties = {
     position: "absolute",
+    top: "-20px",
     left: "50%",
-    bottom: "25%",
-    width: `${size / 3}px`,
-    height: `${size / 6}px`,
     transform: "translateX(-50%)",
+    fontSize: "12px",
+    fontWeight: "bold",
+    color: remainingTime <= 3000 ? "red" : "black",
   };
 
-  if (isBurnt) {
-    Object.assign(mouthStyle, {
-      borderRadius: `${size / 6}px ${size / 6}px 0 0`,
-      border: `${size / 30}px solid black`,
-      borderBottom: "none",
-    });
-  } else if (isFlipped) {
-    Object.assign(mouthStyle, {
-      width: `${size / 5}px`,
-      height: `${size / 5}px`,
-      borderRadius: "50%",
-      border: `${size / 30}px solid black`,
-    });
-  } else {
-    Object.assign(mouthStyle, {
-      borderRadius: `0 0 ${size / 6}px ${size / 6}px`,
-      border: `${size / 30}px solid black`,
-    });
-  }
-
   return (
-
     <div onClick={onClick} style={jeonStyle}>
-      {/* <div style={faceStyle}>
-        <div style={{...eyeStyle, left: "25%"}} />
-        <div style={{...eyeStyle, right: "25%"}} />
-        <div style={mouthStyle} />
-      </div> */}
       <Image src={JeonTypes[type].image} alt={JeonTypes[type].name} width={60} height={60}/>
+      {!isFlipped && !isBurnt && (
+        <div style={timerStyle}>{Math.ceil(remainingTime / 1000)}s</div>
+      )}
     </div>
-
   );
 };
 
@@ -197,6 +159,7 @@ interface Jeon {
   position: Position;
   isFlipped: boolean;
   isBurnt: boolean;
+  remainingTime: number;
 }
 
 const PancakeGame: React.FC = () => {
@@ -237,16 +200,36 @@ const PancakeGame: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if(gameOver) return;
-    if(score >= 150) {
+    if (score >= 150 && !gameOver) {
       setMessage("축하합니다! 게임 클리어!");
       setGameOver(true);
     }
-  }, [score]);
+  }, [score, gameOver]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!gameOver) {
+        setJeons((prevJeons) =>
+          prevJeons.map((jeon) => ({
+            ...jeon,
+            remainingTime: Math.max(0, jeon.remainingTime - 1000),
+          }))
+        );
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameOver]);
 
   const updateScore = useCallback((points: number) => {
-    setScore((prevScore) => Math.max(0, prevScore + points));
-  }, []);
+    if (!gameOver) {
+      setScore((prevScore) => {
+        const newScore = Math.max(0, prevScore + points);
+        return newScore >= 150 ? 150 : newScore;
+      });
+    }
+  }, [gameOver]);
+
 
   const distance = (p1: Position, p2: Position): number => {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
@@ -290,12 +273,14 @@ const PancakeGame: React.FC = () => {
       attempts++;
     } while (isColliding(newPosition, jeons, minDistance) && attempts < maxAttempts);
 
+   
     const newJeon: Jeon = {
       id: Date.now(),
       type,
       position: newPosition,
       isFlipped: false,
       isBurnt: false,
+      remainingTime: JeonTypes[type].cookTime,
     };
 
     setJeons((prevJeons) => [...prevJeons, newJeon]);
@@ -303,31 +288,35 @@ const PancakeGame: React.FC = () => {
   };
 
   const flipJeon = (id: number, type: keyof JeonTypes) => {
-    setJeons((prevJeons) =>
-      prevJeons.map((jeon) =>
-        jeon.id === id ? { ...jeon, isFlipped: true } : jeon
-      )
-    );
-    if(gameOver) return;
-    setMessage(`${JeonTypes[type].name}이 뒤집어졌습니다!`);
+    if (!gameOver) {
+      setJeons((prevJeons) =>
+        prevJeons.map((jeon) =>
+          jeon.id === id ? { ...jeon, isFlipped: true } : jeon
+        )
+      );
+      setMessage(`${JeonTypes[type].name}이 뒤집어졌습니다!`);
+    }
   };
 
   const removeJeon = (id: number) => {
-    setJeons((prevJeons) => prevJeons.filter((jeon) => jeon.id !== id));
-    updateScore(10);
-    setMessage("");
+    if (!gameOver) {
+      setJeons((prevJeons) => prevJeons.filter((jeon) => jeon.id !== id));
+      updateScore(10);
+      setMessage("");
+    }
   };
 
   const burnJeon = (id: number, type: keyof JeonTypes) => {
-    setJeons((prevJeons) =>
-      prevJeons.map((jeon) =>
-        jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
-      )
-    );
-    if(gameOver || score >= 150) return;
-    setMessage(`${JeonTypes[type].name}이 타버렸네요!!`);
-    updateScore(-10);
-    setTimeout(() => removeJeon(id), 3000);
+    if (!gameOver) {
+      setJeons((prevJeons) =>
+        prevJeons.map((jeon) =>
+          jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
+        )
+      );
+      setMessage(`${JeonTypes[type].name}이 타버렸네요!!`);
+      updateScore(-10);
+      setTimeout(() => removeJeon(id), 3000);
+    }
   };
 
   const handleJeonClick = (jeon: Jeon) => {
@@ -341,48 +330,53 @@ const PancakeGame: React.FC = () => {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden">
-    <div className="absolute top-0 left-0 w-full h-full">
-      <JumakBackground width={backgroundSize.width} height={backgroundSize.height} />
+      <div className="absolute top-0 left-0 w-full h-full">
+        <JumakBackground width={backgroundSize.width} height={backgroundSize.height} />
+      </div>
+      <div className="relative z-10 flex flex-col items-center justify-center p-2 sm:p-4 bg-yellow-100 bg-opacity-70 rounded-lg max-w-[95%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] mx-auto my-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-brown-800">추석맞이 전 부치기 게임</h1>
+        <div className="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-4 text-brown-600">
+          점수: {score}점
+        </div>
+        <div className="relative mb-2 sm:mb-4" style={{
+          width: `${panSize.width}px`,
+          height: `${panSize.height}px`,
+          maxWidth: '100%',
+          maxHeight: '50vh'
+        }}>
+          <Pan width={panSize.width} height={panSize.height} />
+          {score >= 150 && gameOver && (
+            <p className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-4xl sm:text-5xl md:text-6xl font-bold text-yellow-500 bg-brown-800 bg-opacity-80">
+              게임 클리어!</p>
+          )}
+          {jeons.map((jeon) => (
+            <Jeon
+              key={jeon.id}
+              type={jeon.type}
+              position={jeon.position}
+              isFlipped={jeon.isFlipped}
+              isBurnt={jeon.isBurnt}
+              onClick={() => handleJeonClick(jeon)}
+              size={jeonSize}
+              remainingTime={jeon.remainingTime}
+            />
+          ))}
+        </div>
+        <p className="text-sm sm:text-base md:text-lg text-red-500 font-semibold h-4 sm:h-6 mb-2">{message}</p>
+        <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+          {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
+            <button
+              key={type}
+              className="px-2 py-1 sm:px-3 sm:py-1 bg-brown-500 text-white rounded hover:bg-brown-600 transition text-xs sm:text-sm md:text-base font-bold"
+              onClick={() => addJeon(type)}
+              disabled={gameOver}
+            >
+              {JeonTypes[type].name} 추가
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
-    <div className="relative z-10 flex flex-col items-center justify-center p-2 sm:p-4 bg-yellow-100 bg-opacity-70 rounded-lg max-w-[95%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] mx-auto my-4">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4 text-center text-brown-800">추석맞이 전 부치기 게임</h1>
-      <div className="text-lg sm:text-xl md:text-2xl mb-2 sm:mb-4 text-brown-600">
-        점수: {score}점
-      </div>
-      <div className="relative mb-2 sm:mb-4" style={{
-        width: `${panSize.width}px`,
-        height: `${panSize.height}px`,
-        maxWidth: '100%',
-        maxHeight: '50vh'
-      }}>
-        <Pan width={panSize.width} height={panSize.height} />
-        {jeons.map((jeon) => (
-          <Jeon
-            key={jeon.id}
-            type={jeon.type}
-            position={jeon.position}
-            isFlipped={jeon.isFlipped}
-            isBurnt={jeon.isBurnt}
-            onClick={() => handleJeonClick(jeon)}
-            size={jeonSize}
-          />
-        ))}
-      </div>
-      <p className="text-sm sm:text-base md:text-lg text-red-500 font-semibold h-4 sm:h-6 mb-2">{message}</p>
-      <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
-        {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
-          <button
-            key={type}
-            className="px-2 py-1 sm:px-3 sm:py-1 bg-brown-500 text-white rounded hover:bg-brown-600 transition text-xs sm:text-sm md:text-base font-bold"
-            onClick={() => addJeon(type)}
-            disabled={gameOver}
-          >
-            {JeonTypes[type].name} 추가
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
   );
 };
 export default PancakeGame;
