@@ -237,8 +237,9 @@ const PancakeGame: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if(score >= 100) {
-      setMessage("축하합니다! 100점을 달성하셨습니다!");
+    if(gameOver) return;
+    if(score >= 150) {
+      setMessage("축하합니다! 게임 클리어!");
       setGameOver(true);
     }
   }, [score]);
