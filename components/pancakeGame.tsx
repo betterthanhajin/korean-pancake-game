@@ -1,10 +1,17 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import Image,{StaticImageData} from "next/image";
+import kimchi from "../public/kimchi.png";
+import meat from "../public/meat.png";
+import group from "../public/group.png";
+import pa from "../public/pa.png";
+import JumakBackground from "./jumakBackground";
 
 interface JeonType {
   color: string;
   cookTime: number;
   name: string;
+  image: StaticImageData;
 }
 
 interface JeonTypes {
@@ -12,11 +19,10 @@ interface JeonTypes {
 }
 
 const JeonTypes: JeonTypes = {
-  kimchi: { color: "#ffa502", cookTime: 5000, name: "김치전" },
-  pa: { color: "#7bed9f", cookTime: 4000, name: "파전" },
-  gogi: { color: "#ff6b6b", cookTime: 6000, name: "고기전" },
-  hobak: { color: "#eccc68", cookTime: 4500, name: "호박전" },
-  gamja: { color: "#dfe4ea", cookTime: 5500, name: "감자전" },
+  kimchi: { color: "#ffa502", cookTime: 5000, name: "김치전", image: kimchi },
+  pa: { color: "#7bed9f", cookTime: 4000, name: "파전", image: pa },
+  gogi: { color: "#ff6b6b", cookTime: 4500, name: "고기전", image: meat },
+  hobak: { color: "#eccc68", cookTime: 6000, name: "모듬전", image: group },
 };
 
 interface Position {
@@ -48,16 +54,12 @@ const Jeon: React.FC<JeonProps> = ({
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "50%",
-    backgroundColor: JeonTypes[type].color,
     transform: isFlipped ? "scaleY(-1)" : "none",
     filter: isBurnt ? "brightness(50%)" : "none",
     cursor: "pointer",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    fontSize: `${size / 6}px`,
-    fontWeight: "bold",
-    color: "black",
     transition: "transform 0.3s, filter 0.3s",
   };
 
@@ -107,13 +109,16 @@ const Jeon: React.FC<JeonProps> = ({
   }
 
   return (
-    <div style={jeonStyle} onClick={onClick}>
-      <div style={faceStyle}>
+
+    <div onClick={onClick} style={jeonStyle}>
+      {/* <div style={faceStyle}>
         <div style={{...eyeStyle, left: "25%"}} />
         <div style={{...eyeStyle, right: "25%"}} />
         <div style={mouthStyle} />
-      </div>
+      </div> */}
+      <Image src={JeonTypes[type].image} alt={JeonTypes[type].name} width={60} height={60}/>
     </div>
+
   );
 };
 
@@ -201,6 +206,8 @@ const PancakeGame: React.FC = () => {
   const [jeonSize, setJeonSize] = useState(60);
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState<string>("");
+  const [backgroundSize, setBackgroundSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -208,6 +215,7 @@ const PancakeGame: React.FC = () => {
       const height = width * 0.75;
       setPanSize({ width, height });
       setJeonSize(Math.max(30, width * 0.15));
+      setBackgroundSize({ width: window.innerWidth, height: window.innerHeight });
     };
 
     handleResize();
@@ -216,9 +224,9 @@ const PancakeGame: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if(score >= 50) {
+    if(score >= 100) {
       setGameOver(true);
-      setMessage("축하합니다! 50점을 달성하셨습니다!");
+      setMessage("축하합니다! 100점을 달성하셨습니다! Game Over!");
     }
   }, [score]);
 
@@ -317,10 +325,14 @@ const PancakeGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-yellow-100 p-4">
-      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">전 부치기 게임</h1>
-      <div className="text-xl sm:text-2xl mb-4">
-        {gameOver ? `게임 종료! 최종 점수: ${score}` : `점수: ${score}`}
+    <div className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden">
+    <div className="absolute top-0 left-0 w-full h-full">
+      <JumakBackground width={backgroundSize.width} height={backgroundSize.height} />
+    </div>
+    <div className="relative z-10 flex flex-col items-center justify-center p-4 bg-yellow-100 bg-opacity-80 rounded-lg">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center text-brown-800">추석맞이 전 부치기 게임</h1>
+      <div className="text-xl sm:text-2xl mb-4 text-brown-600">
+         점수: {score}점
       </div>
       <div className="relative mb-4">
         <Pan width={panSize.width} height={panSize.height} />
@@ -341,7 +353,7 @@ const PancakeGame: React.FC = () => {
         {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
           <button
             key={type}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm sm:text-base"
+            className="px-3 py-1 bg-brown-500 text-orange-700 rounded hover:bg-brown-600 transition text-sm sm:text-base"
             onClick={() => addJeon(type)}
             disabled={gameOver}
           >
@@ -350,6 +362,7 @@ const PancakeGame: React.FC = () => {
         ))}
       </div>
     </div>
+  </div>
   );
 };
 export default PancakeGame;
