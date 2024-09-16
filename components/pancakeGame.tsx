@@ -63,21 +63,21 @@ const Jeon: React.FC<JeonProps> = ({
     transition: "transform 0.3s, filter 0.3s",
   };
 
-  const faceStyle: React.CSSProperties = {
-    position: "relative",
-    width: "100%",
-    height: "100%",
-    transform: isFlipped ? "scaleY(-1)" : "none",
-  };
+  // const faceStyle: React.CSSProperties = {
+  //   position: "relative",
+  //   width: "100%",
+  //   height: "100%",
+  //   transform: isFlipped ? "scaleY(-1)" : "none",
+  // };
 
-  const eyeStyle: React.CSSProperties = {
-    position: "absolute",
-    width: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
-    height: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
-    borderRadius: "50%",
-    backgroundColor: "black",
-    top: "30%",
-  };
+  // const eyeStyle: React.CSSProperties = {
+  //   position: "absolute",
+  //   width: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
+  //   height: isFlipped ? `${size / 6}px` : `${size / 7.5}px`,
+  //   borderRadius: "50%",
+  //   backgroundColor: "black",
+  //   top: "30%",
+  // };
 
   const mouthStyle: React.CSSProperties = {
     position: "absolute",
