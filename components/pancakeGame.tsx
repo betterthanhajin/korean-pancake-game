@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 interface JeonType {
   color: string;
@@ -199,7 +199,8 @@ const PancakeGame: React.FC = () => {
   const [jeons, setJeons] = useState<Jeon[]>([]);
   const [panSize, setPanSize] = useState({ width: 400, height: 300 });
   const [jeonSize, setJeonSize] = useState(60);
-  const alramRef = useRef<HTMLParagraphElement>(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
     const handleResize = () => {
@@ -212,6 +213,17 @@ const PancakeGame: React.FC = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if(score >= 50) {
+      setGameOver(true);
+      setMessage("축하합니다! 50점을 달성하셨습니다!");
+    }
+  }, [score]);
+
+  const updateScore = useCallback((points: number) => {
+    setScore((prevScore) => Math.max(0, prevScore + points));
   }, []);
 
   const distance = (p1: Position, p2: Position): number => {
@@ -239,8 +251,11 @@ const PancakeGame: React.FC = () => {
     };
   };
 
+
   const addJeon = (type: keyof JeonTypes) => {
-    if (jeons.length >= 5) return;
+    if(gameOver ||jeons.length >= 5 ){
+      return;
+    }
 
     const minDistance = jeonSize + 10;
     const maxAttempts = 50;
@@ -265,25 +280,20 @@ const PancakeGame: React.FC = () => {
     setTimeout(() => burnJeon(newJeon.id, newJeon.type), JeonTypes[type].cookTime);
   };
 
-  const flipJeon = (id: number, type:keyof JeonTypes) => {
+  const flipJeon = (id: number, type: keyof JeonTypes) => {
     setJeons((prevJeons) =>
       prevJeons.map((jeon) =>
         jeon.id === id ? { ...jeon, isFlipped: true } : jeon
       )
     );
-    if (alramRef.current) {
-      alramRef.current.textContent = `${JeonTypes[type].name}이 뒤집어졌습니다!`;
-    }
-    setScore((prevScore) => prevScore + 5);
-
+    setMessage(`${JeonTypes[type].name}이 뒤집어졌습니다!`);
+    updateScore(5);
   };
 
   const removeJeon = (id: number) => {
     setJeons((prevJeons) => prevJeons.filter((jeon) => jeon.id !== id));
-    setScore((prevScore) => prevScore + 10);
-    if (alramRef.current) {
-      alramRef.current.textContent = "";
-    }
+    updateScore(10);
+    setMessage("");
   };
 
   const burnJeon = (id: number, type: keyof JeonTypes) => {
@@ -292,15 +302,13 @@ const PancakeGame: React.FC = () => {
         jeon.id === id && !jeon.isFlipped ? { ...jeon, isBurnt: true } : jeon
       )
     );
-    if (alramRef.current) {
-      alramRef.current.textContent = `${JeonTypes[type].name}이 타버렸네요!!`;
-    }
-    setScore((prevScore) => prevScore - 10);
+    setMessage(`${JeonTypes[type].name}이 타버렸네요!!`);
+    updateScore(-10);
     setTimeout(() => removeJeon(id), 2000);
   };
 
   const handleJeonClick = (jeon: Jeon) => {
-    if (jeon.isBurnt) return;
+    if (gameOver || jeon.isBurnt) return;
     if (jeon.isFlipped) {
       removeJeon(jeon.id);
     } else {
@@ -311,11 +319,9 @@ const PancakeGame: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-yellow-100 p-4">
       <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">전 부치기 게임</h1>
-      {score >= 50 ?(
-        <div className="text-xl sm:text-2xl mb-4">점수가 {score}점 !! 수고하셨습니다</div>
-      ) : (
-        <div className="text-xl sm:text-2xl mb-4">점수: {score}</div>
-      )}
+      <div className="text-xl sm:text-2xl mb-4">
+        {gameOver ? `게임 종료! 최종 점수: ${score}` : `점수: ${score}`}
+      </div>
       <div className="relative mb-4">
         <Pan width={panSize.width} height={panSize.height} />
         {jeons.map((jeon) => (
@@ -330,13 +336,14 @@ const PancakeGame: React.FC = () => {
           />
         ))}
       </div>
-      <p className="text-lg text-red-500 font-semibold" ref={alramRef}>&nbsp;</p>
+      <p className="text-lg text-red-500 font-semibold h-6">{message}</p>
       <div className="flex flex-wrap justify-center gap-2">
         {(Object.keys(JeonTypes) as Array<keyof JeonTypes>).map((type) => (
           <button
             key={type}
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm sm:text-base"
             onClick={() => addJeon(type)}
+            disabled={gameOver}
           >
             {JeonTypes[type].name} 추가
           </button>
@@ -345,5 +352,4 @@ const PancakeGame: React.FC = () => {
     </div>
   );
 };
-
 export default PancakeGame;
