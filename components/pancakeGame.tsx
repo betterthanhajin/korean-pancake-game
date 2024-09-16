@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image,{StaticImageData} from "next/image";
 import kimchi from "../public/kimchi.png";
 import meat from "../public/meat.png";
@@ -206,16 +206,29 @@ const PancakeGame: React.FC = () => {
   const [jeonSize, setJeonSize] = useState(60);
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState<string>("");
-  const [backgroundSize, setBackgroundSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const browserWidth = useRef(0);
+  const browserHeight = useRef(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      browserWidth.current = window.innerWidth;
+      browserHeight.current = window.innerHeight;
+    }
+    setBackgroundSize({ width: browserWidth.current, height: browserHeight.current  });
+  }, []);
+
+  const [backgroundSize, setBackgroundSize] = useState({ width: 0, height:0 });
+
+ 
 
 
   useEffect(() => {
     const handleResize = () => {
-      const width = Math.min(400, window.innerWidth - 40);
+      const width = Math.min(400, browserWidth.current - 40);
       const height = width * 0.75;
       setPanSize({ width, height });
       setJeonSize(Math.max(30, width * 0.15));
-      setBackgroundSize({ width: window.innerWidth, height: window.innerHeight });
+      setBackgroundSize({ width: browserWidth.current, height: browserHeight.current });
     };
 
     handleResize();

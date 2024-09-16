@@ -1,3 +1,4 @@
+"use client" ;
 import React from 'react';
 
 interface JumakBackgroundProps {
@@ -28,7 +29,7 @@ const JumakBackground: React.FC<JumakBackgroundProps> = ({ width, height }) => {
           key={i}
           cx={Math.random() * width}
           cy={Math.random() * height * 0.6}
-          r={Math.random() * 1.5 + 0.5}
+          r={width * 0.002}
           fill="#FFFFFF"
           opacity={Math.random() * 0.8 + 0.2}
         />
